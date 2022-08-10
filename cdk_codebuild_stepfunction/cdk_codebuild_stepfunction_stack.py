@@ -4,6 +4,8 @@ from aws_cdk import (
     Stack,
     aws_lambda,
     aws_iam,
+    aws_s3,
+    aws_s3_deployment as s3deploy,
     aws_stepfunctions as sfn,
     aws_stepfunctions_tasks as tasks,
     aws_codebuild as codebuild
@@ -33,3 +35,30 @@ class CdkCodebuildStepfunctionStack(Stack):
 
 # Attach CodeBuild policy to Lambda execution role
         codebuild_lambda.role.add_to_policy(codebuild_statement)
+
+# S3 bucket for CodeBuild artifacts including buildspec.yml
+        codebuild_artifacts_bucket = aws_s3.Bucket(self, "codebuild-bucket", bucket_name="cdk-codebuild-stepfunction-demo-artifacts-bucket",versioned=True)
+
+# S3 deployment to upload buildspec.yml for city codebuild project and use it as codebuild source for city Project
+        city_codebuild_bucket_deployment = s3deploy.BucketDeployment(self, "city-codebuild-artifacts-bucket-deployment",
+            sources=[s3deploy.Source.asset("city_codebuild")],
+            destination_bucket=codebuild_artifacts_bucket,
+            destination_key_prefix="city"
+        )
+
+        city_codebuild_s3_source = codebuild.Source.s3(
+            bucket=codebuild_artifacts_bucket,
+            path="city/"
+        )
+
+        city_codebuild_project = codebuild.Project(self, "city-codebuild-project",
+            project_name="city-codebuild-project",
+            source=city_codebuild_s3_source,
+            environment_variables={
+                "CITY": codebuild.BuildEnvironmentVariable(
+                    value="placeholder"
+                )
+            }
+        )
+
+        codebuild_artifacts_bucket.grant_read(city_codebuild_project.role)
