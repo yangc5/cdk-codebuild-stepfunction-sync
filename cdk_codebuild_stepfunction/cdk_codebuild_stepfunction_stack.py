@@ -62,3 +62,27 @@ class CdkCodebuildStepfunctionStack(Stack):
         )
 
         codebuild_artifacts_bucket.grant_read(city_codebuild_project.role)
+
+# Step Function
+        seattle_task= tasks.LambdaInvoke(self, "seattle-task",
+            lambda_function=codebuild_lambda,
+            payload=sfn.TaskInput.from_object({
+                "project_name": city_codebuild_project.project_name,
+                "city": "Seattle"
+            })
+        )
+
+        new_york_task= tasks.LambdaInvoke(self, "new-york-task",
+            lambda_function=codebuild_lambda,
+            payload=sfn.TaskInput.from_object({
+                "project_name": city_codebuild_project.project_name,
+                "city": "New York"
+            })
+        )
+
+        sfn_definition = seattle_task.next(new_york_task)
+
+        city_sfn = sfn.StateMachine(self, "city_sfn",
+            definition=sfn_definition,
+            state_machine_name="city-step-function"
+        )
