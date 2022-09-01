@@ -37,7 +37,7 @@ class CdkCodebuildStepfunctionStack(Stack):
         codebuild_lambda.role.add_to_policy(codebuild_statement)
 
 # S3 bucket for CodeBuild artifacts including buildspec.yml
-        codebuild_artifacts_bucket = aws_s3.Bucket(self, "codebuild-bucket", bucket_name="cdk-codebuild-stepfunction-demo-artifacts-bucket",versioned=True)
+        codebuild_artifacts_bucket = aws_s3.Bucket(self, "codebuild-bucket", bucket_name=cdk.Aws.ACCOUNT_ID+"cdk-codebuild-stepfunction-demo-artifacts-bucket",versioned=True)
 
 # S3 deployment to upload buildspec.yml for city codebuild project and use it as codebuild source for city Project
         city_codebuild_bucket_deployment = s3deploy.BucketDeployment(self, "city-codebuild-artifacts-bucket-deployment",
